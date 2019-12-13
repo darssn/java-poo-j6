@@ -5,6 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
 
+/**Classe permettant d'ouvrir une connection a une base de données
+ * 
+ * */
 public class Connectionbdd {
 
 	static {
@@ -16,6 +19,11 @@ public class Connectionbdd {
 		}
 	}
 
+	
+	/**Permet de creer une instance de Connection avec les parametre de connection a la base de données
+	 * 
+	 *@return Connection
+	 **/
 	public static Connection newConnect() {
 
 		Connection connect = null;

@@ -13,20 +13,29 @@ public class Departement implements EnsemblePop {
 	private String code;
 	/** population : int*/
 	private int population;
+	
+	/**idDep : int 
+	 * */
 	private int idDep = 0;
+	
+	/**idReg : int
+	 * */
 	private int idReg = 0;
 	
 	/** villes : List<Ville>*/
 	private List<Ville> villes = new ArrayList<>();
 	
 	/** Constructeur
-	 * @param code code
+	 * @param code codeR
 	 */
 	public Departement(String code,int codeR) {
 		super();
 		this.code = code;
 		this.idReg = codeR;
 	}
+	/** Constructeur
+	 * @param id code codeR
+	 */
 	
 	public Departement(int id,String code,int codeR) {
 		super();
@@ -69,6 +78,12 @@ public class Departement implements EnsemblePop {
 	public void setPopulation(int population) {
 		this.population = population;
 	}
+	
+	/**Permet de voir si un departement existe 
+	 * @param rec Recensement
+	 * @param a  String code du departement
+ 	 * @return booleen
+	 * */
 	
 	public static boolean codeExists(Recensement rec,String a){
 		

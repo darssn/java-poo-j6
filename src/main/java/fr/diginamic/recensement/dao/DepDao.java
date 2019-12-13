@@ -40,7 +40,7 @@ public interface DepDao {
 	/**
 	 * Recherche un departement avec 1 variable
 	 * 
-	 * @param nomDep nom du departement
+	 * @param nomDep String nom du departement
 	 * @return un Departement si existant
  	 */
 	Departement rechercheDep(String nomDep);

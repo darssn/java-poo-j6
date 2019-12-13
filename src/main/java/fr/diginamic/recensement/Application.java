@@ -40,17 +40,28 @@ public class Application {
 		List<Ville> lV = new ArrayList<>();
 		do {
 
-			// Affichage du menu
+			/** Affichage du menu
+			 * 
+			 */
 			afficherMenu();
 
-			// Poser une question à l'utilisateur
+			/** Poser une question à l'utilisateur
+			 * 
+			 */
 			String choixMenu = scanner.nextLine();
 
-			// Conversion du choix utilisateur en int
+			/** Conversion du choix utilisateur en int
+			 * 
+			 */
 			choix = Integer.parseInt(choixMenu);
 
-			// On exécute l'option correspondant au choix de l'utilisateur
+			/** On exécute l'option correspondant au choix de l'utilisateur
+			 * 
+			 */
 			switch (choix) {
+			
+			/**Recherche d'une ville par rapport au nom d'une ville
+			 * */
 			case 1:
 
 				System.out.println("Quel est le nom de la ville recherchée ? ");
@@ -66,6 +77,8 @@ public class Application {
 				}
 
 				break;
+				/**Recherche de la population d'un departement avec le code departement
+				 * */
 			case 2:
 
 				System.out.println("Quel est le code du département recherché ? ");
@@ -80,6 +93,9 @@ public class Application {
 				}
 
 				break;
+				
+				/**Recherche de la population d'une region par rapport au code region
+				 * */
 			case 3:
 
 				System.out.println("Quel est le code de la région recherchée ? ");
@@ -93,6 +109,9 @@ public class Application {
 				}
 
 				break;
+				
+				/**Recherche des villes d'un departement ayant une population comprise entre 2 valeurs 
+				 * */
 			case 4:
 
 				System.out.println("Quel est le code du département recherché ? ");

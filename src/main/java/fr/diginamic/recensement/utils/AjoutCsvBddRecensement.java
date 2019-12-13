@@ -12,11 +12,16 @@ import fr.diginamic.recensement.entites.Recensement;
 import fr.diginamic.recensement.entites.Region;
 import fr.diginamic.recensement.entites.Ville;
 
+/**Classe permetant d'ajouter des elements dans la base de données recensement 
+ * */
+
 public class AjoutCsvBddRecensement {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AjoutCsvBddRecensement.class);
 	
-	
+	/**Creation de la base de données a partir du .csv du recensement
+	 * */
+
 
 	public static void create() {
 
@@ -26,7 +31,8 @@ public class AjoutCsvBddRecensement {
 
 		Recensement liste = RecensementUtils.lire(path);
 
-
+		int element = 0;
+		
 		RegionDaoJdbc rDao = new RegionDaoJdbc();
 		DepDaoJdbc dDao = new DepDaoJdbc();
 		VilleDaoJdbc vDao = new VilleDaoJdbc();
@@ -67,6 +73,9 @@ public class AjoutCsvBddRecensement {
 				
 				LOG.error(e.getMessage());
 			}
+			
+			element++;
+			System.out.println("Ajout n°"+element);
 
 		}
 
