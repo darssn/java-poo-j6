@@ -1,11 +1,8 @@
 package fr.diginamic.recensement;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
-
 
 import fr.diginamic.recensement.dao.DepDaoJdbc;
 import fr.diginamic.recensement.dao.RegionDaoJdbc;
@@ -21,20 +18,12 @@ import fr.diginamic.recensement.utils.RecensementUtils;
  */
 public class Application {
 
-	/**
-	 * Point d'entrée
-	 * 
-	 * @param args
-	 *            arguments (non utilisés ici)
-	 */
 	public static void main(String[] args) {
 		Scanner scanner = new Scanner(System.in);
-	
-		
+
 		String path = ClassLoader.getSystemClassLoader().getResource("recensement.csv").getFile();
-		
+
 		Recensement recensement = RecensementUtils.lire(path);
-		
 
 		if (recensement == null) {
 			System.out.println("L'application doit s'arrétée en raison d'une erreur d'exécution.");
@@ -48,7 +37,7 @@ public class Application {
 		DepDaoJdbc dDao = new DepDaoJdbc();
 		String recherche = null;
 		long total = 0;
-		List <Ville> lV = new ArrayList<>();
+		List<Ville> lV = new ArrayList<>();
 		do {
 
 			// Affichage du menu
@@ -63,54 +52,74 @@ public class Application {
 			// On exécute l'option correspondant au choix de l'utilisateur
 			switch (choix) {
 			case 1:
-				
-					
+
 				System.out.println("Quel est le nom de la ville recherchée ? ");
-				
-			 recherche = scanner.nextLine();
-				
+
+				recherche = scanner.nextLine();
+
 				Ville v = vDao.rechercheVille(recherche);
-				
-				System.out.println(v);
-								
-				
+
+				if (v != null) {
+					System.out.println(v);
+				} else {
+					System.out.println("Veuillez renseigner un nom de ville valide");
+				}
+
 				break;
 			case 2:
-				
+
 				System.out.println("Quel est le code du département recherché ? ");
 				recherche = scanner.nextLine();
-				total  =  dDao.calcPop(dDao.rechercheIdDep(recherche));
-				System.out.println(total);
-				
+
+				if (dDao.rechercheDep(recherche) != null) {
+					total = dDao.calcPop(dDao.rechercheDep(recherche).getIdDep());
+					System.out.println(total);
+
+				} else {
+					System.out.println("Veuillez renseigner un departement valide");
+				}
+
 				break;
 			case 3:
-							
+
 				System.out.println("Quel est le code de la région recherchée ? ");
 				recherche = scanner.nextLine();
-				total  =  rDao.calcPopRegion(rDao.rechercheIdReg(recherche));
-				System.out.println(total);
-				
+
+				if (rDao.rechercheReg(Integer.parseInt(recherche)) != null) {
+					total = rDao.calcPopRegion(rDao.rechercheReg(Integer.parseInt(recherche)).getIdReg());
+					System.out.println(total);
+				} else {
+					System.out.println("Veuillez renseigner une region valide");
+				}
+
 				break;
 			case 4:
-				
-				System.out.println("Quel est le code du département recherché ? ");		
+
+				System.out.println("Quel est le code du département recherché ? ");
 				recherche = scanner.nextLine();
 				System.out.println("Choississez une population minimum (en milliers d'habitants): ");
-				String saisieMin = scanner.nextLine();			
+				String saisieMin = scanner.nextLine();
 				System.out.println("Choississez une population maximum (en milliers d'habitants): ");
 				String saisieMax = scanner.nextLine();
-				
-				lV = vDao.villeBorne(Integer.parseInt(saisieMin), Integer.parseInt(saisieMax),dDao.rechercheIdDep(recherche));
-				
-				for(Ville vi : lV){
-					System.out.println(vi);
+
+				if (dDao.rechercheDep(recherche) != null) {
+					lV = vDao.villeBorne(Integer.parseInt(saisieMin), Integer.parseInt(saisieMax),
+							dDao.rechercheDep(recherche).getIdDep());
+
+					for (Ville vi : lV) {
+						System.out.println(vi);
+					}
+				} else {
+					System.out.println("Veuillez renseigner un departement valide");
 				}
-				
-	
+
 				break;
 			}
 		} while (choix != 99);
 
+		vDao.close();
+		dDao.close();
+		rDao.close();
 		scanner.close();
 
 	}

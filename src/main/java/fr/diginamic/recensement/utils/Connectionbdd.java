@@ -37,7 +37,7 @@ public class Connectionbdd {
 
 		} catch (SQLException e) {
 
-			System.out.println(e);
+			throw new RuntimeException("Impossible de se connecter a la base de données");
 		}
 
 		return connect;

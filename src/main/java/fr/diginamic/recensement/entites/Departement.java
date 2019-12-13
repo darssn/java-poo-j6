@@ -13,8 +13,8 @@ public class Departement implements EnsemblePop {
 	private String code;
 	/** population : int*/
 	private int population;
-	
-	private int codeReg = 0;
+	private int idDep = 0;
+	private int idReg = 0;
 	
 	/** villes : List<Ville>*/
 	private List<Ville> villes = new ArrayList<>();
@@ -22,15 +22,17 @@ public class Departement implements EnsemblePop {
 	/** Constructeur
 	 * @param code code
 	 */
-	public Departement(String code) {
-		super();
-		this.code = code;
-	}
-	
 	public Departement(String code,int codeR) {
 		super();
 		this.code = code;
-		this.codeReg = codeR;
+		this.idReg = codeR;
+	}
+	
+	public Departement(int id,String code,int codeR) {
+		super();
+		this.idDep = id;
+		this.code = code;
+		this.idReg = codeR;
 	}
 	
 	
@@ -91,15 +93,29 @@ public class Departement implements EnsemblePop {
 	/**Getter
 	 * @return the codeReg
 	 */
-	public int getCodeReg() {
-		return codeReg;
+	public int getIdReg() {
+		return idReg;
 	}
 
 	/**Setter
 	 * @param codeReg the codeReg to set
 	 */
-	public void setCodeReg(int codeReg) {
-		this.codeReg = codeReg;
+	public void setIdReg(int codeReg) {
+		this.idReg = codeReg;
+	}
+
+	/**Getter
+	 * @return the idDep
+	 */
+	public int getIdDep() {
+		return idDep;
+	}
+
+	/**Setter
+	 * @param idDep the idDep to set
+	 */
+	public void setIdDep(int idDep) {
+		this.idDep = idDep;
 	}
 
 	

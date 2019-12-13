@@ -10,11 +10,13 @@ import java.util.List;
 public class Region implements EnsemblePop {
 
 	/** code : String*/
-	private String code;
+	private int code;
 	/** nom : String*/
 	private String nom;
 	/** population : int*/
 	private int population;
+	
+	private int idReg;
 	
 	/** villes : List<Ville>*/
 	private List<Ville> villes = new ArrayList<>();
@@ -23,7 +25,15 @@ public class Region implements EnsemblePop {
 	 * @param code code
 	 * @param nom nom
 	 */
-	public Region(String code, String nom) {
+	public Region(int idReg,int code, String nom) {
+		super();
+		this.code = code;
+		this.nom = nom;
+		this.idReg = idReg;
+	}
+	
+	public Region(int code, String nom){
+		
 		super();
 		this.code = code;
 		this.nom = nom;
@@ -37,18 +47,7 @@ public class Region implements EnsemblePop {
 		this.population=this.population+ville.getPopulation();
 	}
 	
-	/** Getter
-	 * @return the code
-	 */
-	public String getCode() {
-		return code;
-	}
-	/** Setter
-	 * @param code the code to set
-	 */
-	public void setCode(String code) {
-		this.code = code;
-	}
+
 	/** Getter
 	 * @return the nom
 	 */
@@ -93,6 +92,34 @@ public static boolean regionExists(Recensement rec,String a){
 		
 		
 	}
+
+/**Getter
+ * @return the code
+ */
+public int getCode() {
+	return code;
+}
+
+/**Setter
+ * @param code the code to set
+ */
+public void setCode(int code) {
+	this.code = code;
+}
+
+/**Getter
+ * @return the idReg
+ */
+public int getIdReg() {
+	return idReg;
+}
+
+/**Setter
+ * @param idReg the idReg to set
+ */
+public void setIdReg(int idReg) {
+	this.idReg = idReg;
+}
 
 	
 }

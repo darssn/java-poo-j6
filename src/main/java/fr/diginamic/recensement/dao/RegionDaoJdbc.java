@@ -1,11 +1,15 @@
 package fr.diginamic.recensement.dao;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.diginamic.recensement.utils.Connectionbdd;
 
@@ -13,38 +17,102 @@ import fr.diginamic.recensement.entites.Region;
 
 public class RegionDaoJdbc implements RegionDao {
 
+	private static final Logger LOG = LoggerFactory.getLogger(RegionDaoJdbc.class);
+
+	public Connection connect = null;
+	public PreparedStatement stInsert;
+	public PreparedStatement stUpdateNom;
+	public PreparedStatement stDelete;
+	public PreparedStatement stAffAll;
+	public PreparedStatement stRechReg;
+	public PreparedStatement stCalcPopReg;
+
+	public RegionDaoJdbc() {
+
+		connect = Connectionbdd.newConnect();
+
+		try {
+			stInsert = connect.prepareStatement("Insert into region (CODE_REG,NOM_REG)values(?,?)");
+			stUpdateNom = connect.prepareStatement("update region set NOM_REG=? where NOM_REG=?");
+			stDelete = connect.prepareStatement("delete from region where NOM_REG =?");
+			stAffAll = connect.prepareStatement("select * from region");
+			stRechReg = connect.prepareStatement("select * from region where CODE_REG =?");
+			stCalcPopReg = connect.prepareStatement("SELECT SUM(POP) FROM ville,departement WHERE departement.ID_REG = ? AND departement.ID_DEP = ville.ID_DEP");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException(e);
+		}
+
+	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+
+		try {
+			
+			stInsert.close();
+			stUpdateNom.close();
+			stDelete.close();
+			stAffAll.close();
+			stRechReg.close();
+			stCalcPopReg.close();
+			
+			if (connect != null) {
+				connect.close();
+			}
+			
+		} catch (
+
+		SQLException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException(e);
+		}
+	}
+
 	@Override
 	public List<Region> extraire() {
 
 		List<Region> liste = new ArrayList<>();
+		ResultSet rs = null;
 
-		Connection connect = Connectionbdd.newConnect();
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
 
 		try {
-			Statement st = connect.createStatement();
 
-			ResultSet rs = st.executeQuery("select * from region");
+			rs = stAffAll.executeQuery();
 
 			while (rs.next()) {
 
-				String codeReg = Integer.toString(rs.getInt("CODE_REG"));
+				int idReg = rs.getInt("ID_REG");
+				int codeReg = rs.getInt("CODE_REG");
 				String nomReg = rs.getString("NOM_REG");
+				
 
-				liste.add(new Region(codeReg, nomReg));
+				liste.add(new Region(idReg,codeReg, nomReg));
 			}
-
-			rs.close();
-			st.close();
-			connect.close();
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
+		} finally {
+
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				LOG.error(e.getMessage());
+			}
+
 		}
 
 		return liste;
@@ -53,26 +121,22 @@ public class RegionDaoJdbc implements RegionDao {
 	@Override
 	public void insert(Region region) {
 
-		Connection connect = Connectionbdd.newConnect();
-		Statement st = null;
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
 		ResultSet rs = null;
 
 		try {
+			
+			if (rechercheReg(region.getCode()) == null) {
 
-			st = connect.createStatement();
-
-			rs = st.executeQuery(
-
-					"SELECT * from region where CODE_REG =" + Integer.parseInt(region.getCode()) + " AND NOM_REG='"
-							+ region.getNom() + "'");
-
-			if (!rs.next()) {
-
-				st.executeUpdate("Insert into region (CODE_REG,NOM_REG)values(" + Integer.parseInt(region.getCode())
-						+ ",'" + region.getNom() + "')");
+				stInsert.setInt(1, region.getCode());
+				stInsert.setString(2, region.getNom());
+				stInsert.executeUpdate();
 
 			}
-			
+
 			connect.commit();
 
 		} catch (SQLException e) {
@@ -80,17 +144,18 @@ public class RegionDaoJdbc implements RegionDao {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
 		} finally {
 			try {
-				rs.close();
-				st.close();
-				connect.close();
+				if (rs != null) {
+					rs.close();
+				}
+
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LOG.error(e.getMessage());
 			}
 
 		}
@@ -99,48 +164,46 @@ public class RegionDaoJdbc implements RegionDao {
 
 	@Override
 	public int update(String ancienNom, String nouveauNom) {
-		Connection connect = Connectionbdd.newConnect();
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
 		int up = 0;
 
 		try {
-			Statement st = connect.createStatement();
 
-			up = st.executeUpdate("update region set NOM_REG='"+nouveauNom+"' where NOM_REG='"+ancienNom+"'");
+			stUpdateNom.setString(1, nouveauNom);
+			stUpdateNom.setString(2, ancienNom);
+			up = stUpdateNom.executeUpdate();
 
 			connect.commit();
-			st.close();
-			connect.close();
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
 		}
-		
+
 		return up;
 	}
 
 	@Override
 	public boolean delete(Region region) {
-		
-		Connection connect = Connectionbdd.newConnect();
-		Statement st = null;
 
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+		boolean del = false;
 
 		try {
 
-			st = connect.createStatement();
+			stDelete.setString(1, region.getNom());
+			stDelete.executeUpdate();
 
-		
-
-				st.executeUpdate("delete from region where NOM_REG ='"+region.getNom()+"'");
-			
-			
-			return true;
+			del = true;
 
 		} catch (SQLException e) {
 			try {
@@ -150,97 +213,96 @@ public class RegionDaoJdbc implements RegionDao {
 				e1.printStackTrace();
 			}
 			System.out.println(e);
-		} finally {
-			try {
-				
-				st.close();
-				connect.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
 		}
 
-		return false;
+		return del;
 	}
 
 	@Override
-	public int rechercheIdReg(String codeR) {
-		
-		Connection connect = Connectionbdd.newConnect();
-		int idReg = 0;
+	public Region rechercheReg(int codeR) {
+
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+		ResultSet rs = null;
+		Region reg = null;
 
 		try {
-			Statement st = connect.createStatement();
 
-			ResultSet rs = st.executeQuery("select ID_REG from region where CODE_REG ='" + codeR + "'");
+			stRechReg.setInt(1, codeR);
+			rs = stRechReg.executeQuery();
 
 			if (rs.next()) {
 
-				
-				idReg = rs.getInt("ID_REG");
+				reg = new Region(rs.getInt("ID_REG"), rs.getInt("CODE_REG"), rs.getString("NOM_REG"));
 
 			}
-
-			rs.close();
-			st.close();
-			connect.close();
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
+		} finally {
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				LOG.error(e.getMessage());
+			}
 		}
-	
-		
-		
-		return idReg;
+
+		return reg;
 	}
 
 	@Override
 	public int calcPopRegion(int idR) {
-		
-				Connection connect = Connectionbdd.newConnect();
-		Statement st = null;
+
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
 		ResultSet rs = null;
-		int totalPop = 0 ;
-	
+		int totalPop = 0;
+
 		try {
 
-			st = connect.createStatement();
-			rs = st.executeQuery("SELECT SUM(POP) FROM ville,departement WHERE departement.ID_REG ="+idR+" AND departement.ID_DEP = ville.ID_DEP");
+			stCalcPopReg.setInt(1, idR);
 			
-			if(rs.next()){
-				
+			rs = stCalcPopReg.executeQuery();
+
+			if (rs.next()) {
+
 				totalPop = rs.getInt("SUM(POP)");
 			}
 			
-			
+
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
 		} finally {
 			try {
-				//rs.close();
-				st.close();
-				connect.close();
+				if (rs != null) {
+					rs.close();
+				}
+
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				LOG.error(e.getMessage());
 			}
 
 		}
-		
+
 		return totalPop;
 	}
 

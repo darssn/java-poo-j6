@@ -1,11 +1,14 @@
 package fr.diginamic.recensement.dao;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.diginamic.recensement.entites.Ville;
 
@@ -13,16 +16,68 @@ import fr.diginamic.recensement.utils.Connectionbdd;
 
 public class VilleDaoJdbc implements VilleDao {
 
-	@Override
-	public List<Ville> extraire() {
-		List<Ville> liste = new ArrayList<>();
+	private static final Logger LOG = LoggerFactory.getLogger(VilleDaoJdbc.class);
 
-		Connection connect = Connectionbdd.newConnect();
+	public Connection connect = null;
+	public PreparedStatement stInsert;
+	public PreparedStatement stUpdateNom;
+	public PreparedStatement stDelete;
+	public PreparedStatement stAffAll;
+	public PreparedStatement stRechVille;
+	public PreparedStatement stBorneVille;
+
+	public VilleDaoJdbc() {
+
+		connect = Connectionbdd.newConnect();
 
 		try {
-			Statement st = connect.createStatement();
+			stInsert = connect.prepareStatement("Insert into ville (NOM_VILLE,CODE_VILLE,POP,ID_DEP)values(?,?,?,?)");
+			stUpdateNom = connect.prepareStatement("update ville set NOM_VILLE=? where NOM_VILLE=?");
+			stDelete = connect.prepareStatement("delete from ville where NOM_VILLE =?");
+			stAffAll = connect.prepareStatement("select * from ville");
+			stRechVille = connect.prepareStatement("select * from ville where NOM_VILLE=?");
+			stBorneVille = connect.prepareStatement("select * from ville where ID_DEP = ? AND POP between ? AND ?");
 
-			ResultSet rs = st.executeQuery("select * from ville");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException(e);
+		}
+
+	}
+
+	public void close() {
+
+		try {
+
+			stInsert.close();
+			stUpdateNom.close();
+			stDelete.close();
+			stAffAll.close();
+			stRechVille.close();
+			stBorneVille.close();
+
+			if (connect != null) {
+				connect.close();
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<Ville> extraire() {
+
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
+		List<Ville> liste = new ArrayList<>();
+		ResultSet rs = null;
+
+		try {
+
+			rs = stAffAll.executeQuery();
 
 			while (rs.next()) {
 
@@ -34,18 +89,25 @@ public class VilleDaoJdbc implements VilleDao {
 				liste.add(new Ville(nomVille, codeVille, pop, idDep));
 			}
 
-			rs.close();
-			st.close();
-			connect.close();
-
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
+		} finally {
+
+			try {
+				if (rs != null) {
+				rs.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+
+			}
 		}
 
 		return liste;
@@ -54,9 +116,9 @@ public class VilleDaoJdbc implements VilleDao {
 	@Override
 	public void insert(Ville ville) {
 
-		Connection connect = Connectionbdd.newConnect();
-		Statement st = null;
-		ResultSet rs = null;
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
 
 		String nomVille = ville.getNom();
 		int codeVille = Integer.parseInt(ville.getCodeVille());
@@ -65,40 +127,27 @@ public class VilleDaoJdbc implements VilleDao {
 
 		try {
 
-			st = connect.createStatement();
+			if (rechercheVille(nomVille) == null) {
 
-			rs = st.executeQuery(
+				stInsert.setString(1, nomVille);
+				stInsert.setInt(2, codeVille);
+				stInsert.setInt(3, pop);
+				stInsert.setInt(4, idDep);
 
-					"SELECT * from ville where NOM_VILLE ='" + nomVille + "' AND CODE_VILLE='" + codeVille
-							+ "' AND POP=" + pop);
+				stInsert.executeUpdate();
 
-			if (!rs.next()) {
-
-				st.executeUpdate("Insert into ville (NOM_VILLE,CODE_VILLE,POP,ID_DEP)values('" + nomVille + "',"
-						+ codeVille + "," + pop + "," + idDep + ")");
+				connect.commit();
 
 			}
-
-			connect.commit();
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
-		} finally {
-			try {
-				rs.close();
-				st.close();
-				connect.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
+			LOG.error(e.getMessage());
 		}
 
 	}
@@ -106,27 +155,29 @@ public class VilleDaoJdbc implements VilleDao {
 	@Override
 	public int update(String ancienNom, String nouveauNom) {
 
-		Connection connect = Connectionbdd.newConnect();
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
 		int up = 0;
 
 		try {
-			Statement st = connect.createStatement();
 
-			up = st.executeUpdate(
-					"update ville set NOM_VILLE='" + nouveauNom + "' where NOM_VILLE='" + ancienNom + "'");
+			stUpdateNom.setString(1, nouveauNom);
+			stUpdateNom.setString(2, ancienNom);
+
+			up = stUpdateNom.executeUpdate();
 
 			connect.commit();
-			st.close();
-			connect.close();
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
 		}
 
 		return up;
@@ -134,50 +185,47 @@ public class VilleDaoJdbc implements VilleDao {
 
 	@Override
 	public boolean delete(Ville ville) {
-		Connection connect = Connectionbdd.newConnect();
-		Statement st = null;
+
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
+		boolean del = false;
 
 		try {
 
-			st = connect.createStatement();
+			stDelete.setString(1, ville.getNom());
+			stDelete.executeUpdate();
 
-			st.executeUpdate("delete from ville where NOM_VILLE ='" + ville.getNom() + "'");
-
-			return true;
+			del = true;
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
-		} finally {
-			try {
-
-				st.close();
-				connect.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
+			LOG.error(e.getMessage());
 		}
 
-		return false;
+		return del;
 	}
 
 	@Override
 	public Ville rechercheVille(String nomVille) {
 
-		Connection connect = Connectionbdd.newConnect();
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
+		ResultSet rs = null;
 		Ville ville = null;
 
 		try {
-			Statement st = connect.createStatement();
 
-			ResultSet rs = st.executeQuery("select * from ville where NOM_VILLE='" + nomVille + "'");
+			stRechVille.setString(1, nomVille);
+			rs = stRechVille.executeQuery();
 
 			if (rs.next()) {
 
@@ -189,34 +237,48 @@ public class VilleDaoJdbc implements VilleDao {
 				ville = new Ville(nomV, codeVille, pop, idDep);
 			}
 
-			rs.close();
-			st.close();
-			connect.close();
+			
 
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
+		} finally {
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				LOG.error(e.getMessage());
+			}
 		}
 		return ville;
 	}
 
 	@Override
 	public List<Ville> villeBorne(int a, int b, int iDep) {
-		
-		List<Ville> listeVille = new ArrayList<>();
-		
-		Connection connect = Connectionbdd.newConnect();
 
+		if (connect == null) {
+			connect = Connectionbdd.newConnect();
+		}
+
+		List<Ville> listeVille = new ArrayList<>();
+		ResultSet rs = null;
+		
+	
 
 		try {
-			Statement st = connect.createStatement();
+			stBorneVille.setInt(1, iDep);
 
-			ResultSet rs = st.executeQuery("select * from ville where ID_DEP ="+ iDep+" AND POP between " + a + " AND "+b);
+			stBorneVille.setInt(2, a);
+			stBorneVille.setInt(3, b);
+			
+			rs = stBorneVille.executeQuery();
 
 			while (rs.next()) {
 
@@ -228,18 +290,23 @@ public class VilleDaoJdbc implements VilleDao {
 				listeVille.add(new Ville(nomV, codeVille, pop, idDep));
 			}
 
-			rs.close();
-			st.close();
-			connect.close();
-
 		} catch (SQLException e) {
 			try {
 				connect.rollback();
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				LOG.error(e1.getMessage());
 			}
-			System.out.println(e);
+			LOG.error(e.getMessage());
+		} finally {
+			try {
+				if (rs != null) {
+				rs.close();
+				}
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				LOG.error(e.getMessage());
+			}
 		}
 
 		return listeVille;
