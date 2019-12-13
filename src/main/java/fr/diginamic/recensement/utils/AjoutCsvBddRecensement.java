@@ -35,10 +35,10 @@ public class AjoutCsvBddRecensement {
 		for (Ville v : liste.getVilles()) {
 
 			int codeReg = Integer.parseInt(v.getCodeRegion());
-			String nomReg = v.getNomRegion().replace("'", "''");
+			String nomReg = v.getNomRegion();
 			String codeDep = v.getCodeDepartement();
 			int codeVille = Integer.parseInt(v.getCodeVille());
-			String nomVille = v.getNom().replace("'", "''");
+			String nomVille = v.getNom();
 			int pop = v.getPopulation();
 
 			try {
